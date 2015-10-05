@@ -20,9 +20,9 @@ from scikits.talkbox.features.mfcc import mfcc
 import os, tempfile, warnings
 import numpy as np
 
-def find_offset(file1, file2, fs=8000, trim=60*15, correl_nframes=1000):
+def find_offset(file1, file2, fs=8000, trim=60*15, correl_nframes=1000, skipFile2=0):
     tmp1 = convert_and_trim(file1, fs, trim)
-    tmp2 = convert_and_trim(file2, fs, trim)
+    tmp2 = convert_and_trim(file2, fs, trim, skipFile2)
     # Removing warnings because of 18 bits block size
     # outputted by ffmpeg
     # https://trac.ffmpeg.org/ticket/1843
@@ -44,7 +44,7 @@ def find_offset(file1, file2, fs=8000, trim=60*15, correl_nframes=1000):
     score = (c[max_k_index] - np.mean(c)) / np.std(c) # standard score of peak
     os.remove(tmp1)
     os.remove(tmp2)
-    return offset, score
+    return offset-skipFile2, score
 
 def ensure_non_zero(signal):
     # We add a little bit of static to avoid
@@ -66,12 +66,12 @@ def cross_correlation(mfcc1, mfcc2, nframes):
 def std_mfcc(mfcc):
     return (mfcc - np.mean(mfcc, axis=0)) / np.std(mfcc, axis=0)
 
-def convert_and_trim(afile, fs, trim):
+def convert_and_trim(afile, fs, trim, fileoffset=0):
     tmp = tempfile.NamedTemporaryFile(mode='r+b', prefix='offset_', suffix='.wav')
     tmp_name = tmp.name
     tmp.close()
     psox = Popen([
-        'ffmpeg', '-loglevel', 'panic', '-i', afile, 
+        'ffmpeg', '-loglevel', 'panic', '-ss', str(fileoffset), '-i', afile, 
         '-ac', '1', '-ar', str(fs), '-ss', '0', '-t', str(trim), 
         '-acodec', 'pcm_s16le', tmp_name
     ], stderr=PIPE)
