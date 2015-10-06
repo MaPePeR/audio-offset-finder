@@ -71,8 +71,8 @@ def convert_and_trim(afile, fs, trim, fileoffset=0):
     tmp_name = tmp.name
     tmp.close()
     psox = Popen([
-        'ffmpeg', '-loglevel', 'panic', '-ss', str(fileoffset), '-i', afile, 
-        '-ac', '1', '-ar', str(fs), '-ss', '0', '-t', str(trim), 
+        'ffmpeg', '-loglevel', 'panic', '-i', afile, 
+        '-ac', '1', '-ar', str(fs), '-ss', str(fileoffset), '-t', str(trim), 
         '-acodec', 'pcm_s16le', tmp_name
     ], stderr=PIPE)
     psox.communicate()
